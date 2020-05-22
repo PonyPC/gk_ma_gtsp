@@ -514,9 +514,12 @@ class Generation:
 			return 0
 		self.tours.sort(key=cmp_to_key(CompareTo))
 	def Contains(self, tour):
-		return tour in self.tours
+		for t in self.tours:
+			if tour.equals(t):
+				return True
+		return False
 	def Add(self, tour):
-		if tour not in self.tours:
+		if not self.Contains(tour):
 			self.tours.append(tour)
 	def Size(self):
 		return len(self.tours)
@@ -643,6 +646,25 @@ class Tour:
 		cluster, vertexIndex = task.GetCluster(self.vertices[position])
 		item = RandomTourItem(cluster, vertexIndex)
 		return TourElement(item.clusterIndex, item.vertexInCluster)
+	def equals(self, tour):
+		if self.length != tour.length:
+			return False
+
+		delta = self.GetFirstClusterPosition() - tour.GetFirstClusterPosition()
+		if delta < 0:
+			delta = -delta
+			tour1 = self
+			tour2 = tour
+		else:
+			tour1 = tour
+			tour2 = self
+
+		tourIndex = delta
+		for i in range(task.clusterCount - 1, -1, -1):
+			if tour1.vertices[i] != tour2.vertices[tourIndex]:
+				return False
+			tourIndex = PrevPos(tourIndex)
+		return True
 	def GetFirstClusterPosition(self):
 		if self.firstClusterPosition >= 0:
 			return self.firstClusterPosition
