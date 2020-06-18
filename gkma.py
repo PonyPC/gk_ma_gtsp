@@ -22,29 +22,27 @@ class Task:
 	def GetCluster(self, vertex):
 		return self.verticesInfo[vertex].clusterIndex, self.verticesInfo[vertex].vertexIndex
 
-task = Task()
-
-def Weight(v):
+def Weight(task, v):
 	value = 0
 	for i in range(len(v) - 1):
 		value += task.m[v[i]][v[i + 1]]
 	return value
 
-def MinClusterDistance(v):
+def MinClusterDistance(task, v):
 	value = 0
 	for i in range(len(v) - 1):
 		value += task.minClusterDistances[v[i]][v[i + 1]]
 	return value
 
-def MinClusterDistanceForVertices(v):
-	return MinClusterDistance([task.clusterByVertex[i] for i in v])
+def MinClusterDistanceForVertices(task, v):
+	return MinClusterDistance(task, [task.clusterByVertex[i] for i in v])
 	
-def PrevPos(pos):
+def PrevPos(task, pos):
 	if pos == 0:
 		return task.clusterCount - 1
 	return pos - 1
 
-def NextPos(pos):
+def NextPos(task, pos):
 	if pos == task.clusterCount - 1:
 		return 0
 	return pos + 1
@@ -57,7 +55,7 @@ def Rotate(tour, firstClusterPosition):
 		newTour[len(tour) - firstClusterPosition + i] = tour[i]
 	return newTour
 
-def FullSwap(solution):
+def FullSwap(task, solution):
 	totalDelta = 0
 	next2Pos = 0
 	for pos2 in range(task.clusterCount - 1, 1, -1):
@@ -71,7 +69,7 @@ def FullSwap(solution):
 			cur1 = solution[pos1]
 			next1Pos = pos1 + 1
 			next1 = solution[next1Pos]
-			delta = Weight([prev1, cur2, next1]) + Weight([prev2, cur1, next2]) - Weight([prev1, cur1, next1]) - Weight([prev2, cur2, next2])
+			delta = Weight(task, [prev1, cur2, next1]) + Weight(task, [prev2, cur1, next2]) - Weight(task, [prev1, cur1, next1]) - Weight(task, [prev2, cur2, next2])
 			if delta < 0:
 				solution[pos1] = cur2
 				solution[pos2] = cur1
@@ -80,7 +78,7 @@ def FullSwap(solution):
 		next2Pos = pos2
 	return totalDelta
 
-def InsertsWithCO(solution):
+def InsertsWithCO(task, solution):
 	def Insert(solution, oldPosition, newPosition):
 		oldV = solution[oldPosition]
 		if oldPosition < newPosition:
@@ -93,32 +91,32 @@ def InsertsWithCO(solution):
 	totalDelta = 0
 	for oldPos in range(task.clusterCount - 1):
 		oldV = solution[oldPos]
-		oldPrevPos = PrevPos(oldPos)
+		oldPrevPos = PrevPos(task, oldPos)
 		oldPrev = solution[oldPrevPos]
-		oldNextPos = NextPos(oldPos)
+		oldNextPos = NextPos(task, oldPos)
 		oldNext = solution[oldNextPos]
 
 		cluster = task.clusterByVertex[oldV]
 
-		oldWeightFirstPartBefore = Weight([oldPrev, oldV, oldNext])
-		oldWeightFirstPartAfter = Weight([oldPrev, oldNext])
+		oldWeightFirstPartBefore = Weight(task, [oldPrev, oldV, oldNext])
+		oldWeightFirstPartAfter = Weight(task, [oldPrev, oldNext])
 
 		for newPos in range(oldPos - 1):
-			newPrevPos = PrevPos(newPos)
+			newPrevPos = PrevPos(task, newPos)
 			newNextPos = newPos
 
 			newPrev = solution[newPrevPos]
 			newNext = solution[newNextPos]
 
-			oldWeight = oldWeightFirstPartBefore + Weight([newPrev, newNext])
-			if oldWeightFirstPartAfter + MinClusterDistanceForVertices([newPrev, oldV, newNext]) >= oldWeight:
+			oldWeight = oldWeightFirstPartBefore + Weight(task, [newPrev, newNext])
+			if oldWeightFirstPartAfter + MinClusterDistanceForVertices(task, [newPrev, oldV, newNext]) >= oldWeight:
 				continue
 
 			minL = sys.maxsize
 			bestNewV = 0
 			for i in range(len(task.clusters[cluster]) - 1, -1, -1):
 				newV = task.clusters[cluster][i]
-				l = Weight([newPrev, newV, newNext])
+				l = Weight(task, [newPrev, newV, newNext])
 				if l < minL:
 					minL = l
 					bestNewV = newV
@@ -134,8 +132,8 @@ def InsertsWithCO(solution):
 			oldPrev = solution[oldPrevPos]
 			oldNext = solution[oldNextPos]
 			cluster = task.clusterByVertex[oldV]
-			oldWeightFirstPartBefore = Weight([oldPrev, oldV, oldNext])
-			oldWeightFirstPartAfter = Weight([oldPrev, oldNext])
+			oldWeightFirstPartBefore = Weight(task, [oldPrev, oldV, oldNext])
+			oldWeightFirstPartAfter = Weight(task, [oldPrev, oldNext])
 
 			totalDelta += delta
 
@@ -146,15 +144,15 @@ def InsertsWithCO(solution):
 			newPrev = solution[newPrevPos]
 			newNext = solution[newNextPos]
 
-			oldWeight = oldWeightFirstPartBefore + Weight([newPrev, newNext])
-			if oldWeightFirstPartAfter + MinClusterDistanceForVertices([newPrev, oldV, newNext]) >= oldWeight:
+			oldWeight = oldWeightFirstPartBefore + Weight(task, [newPrev, newNext])
+			if oldWeightFirstPartAfter + MinClusterDistanceForVertices(task, [newPrev, oldV, newNext]) >= oldWeight:
 				continue
 
 			minL = sys.maxsize
 			bestNewV = 0
 			for i in range(len(task.clusters[cluster]) - 1, -1, -1):
 				newV = task.clusters[cluster][i]
-				l = Weight([newPrev, newV, newNext])
+				l = Weight(task, [newPrev, newV, newNext])
 				if l < minL:
 					minL = l
 					bestNewV = newV
@@ -170,13 +168,13 @@ def InsertsWithCO(solution):
 			oldPrev = solution[oldPrevPos]
 			oldNext = solution[oldNextPos]
 			cluster = task.clusterByVertex[oldV]
-			oldWeightFirstPartBefore = Weight([oldPrev, oldV, oldNext])
-			oldWeightFirstPartAfter = Weight([oldPrev, oldNext])
+			oldWeightFirstPartBefore = Weight(task, [oldPrev, oldV, oldNext])
+			oldWeightFirstPartAfter = Weight(task, [oldPrev, oldNext])
 
 			totalDelta += delta
 	return totalDelta
 
-def TwoOptFullAsym(solution):
+def TwoOptFullAsym(task, solution):
 	def RestoreLargePos(largePos):
 		if largePos >= task.clusterCount:
 			return largePos - task.clusterCount
@@ -185,13 +183,13 @@ def TwoOptFullAsym(solution):
 	totalDelta = 0
 	for begin2pos in range(task.clusterCount):
 		reverseDelta = 0
-		end1pos = PrevPos(begin2pos)
+		end1pos = PrevPos(task, begin2pos)
 		for len in range(2, task.clusterCount - 1):
 			end2pos = RestoreLargePos(begin2pos + len - 1)
-			begin1pos = NextPos(end2pos)
-			prevEnd2pos = PrevPos(end2pos)
-			reverseDelta += Weight([solution[end2pos], solution[prevEnd2pos]]) - Weight([solution[prevEnd2pos], solution[end2pos]])
-			delta = Weight([solution[end1pos], solution[end2pos]]) + Weight([solution[begin2pos], solution[begin1pos]]) - Weight([solution[end1pos], solution[begin2pos]]) - Weight([solution[end2pos], solution[begin1pos]]) + reverseDelta
+			begin1pos = NextPos(task, end2pos)
+			prevEnd2pos = PrevPos(task, end2pos)
+			reverseDelta += Weight(task, [solution[end2pos], solution[prevEnd2pos]]) - Weight(task, [solution[prevEnd2pos], solution[end2pos]])
+			delta = Weight(task, [solution[end1pos], solution[end2pos]]) + Weight(task, [solution[begin2pos], solution[begin1pos]]) - Weight(task, [solution[end1pos], solution[begin2pos]]) - Weight(task, [solution[end2pos], solution[begin1pos]]) + reverseDelta
 
 			if delta < 0:
 				totalDelta += delta
@@ -203,19 +201,19 @@ def TwoOptFullAsym(solution):
 					solution[p1] = solution[p2]
 					solution[p2] = temp
 
-					p1 = NextPos(p1)
-					p2 = PrevPos(p2)
+					p1 = NextPos(task, p1)
+					p2 = PrevPos(task, p2)
 	return totalDelta
 
-def NeighbourSwapWithCO(solution):
+def NeighbourSwapWithCO(task, solution):
 	def NeighbourSwapWithClusterOptimisation(prevVertex, v1, v2, nextVertex):
-		oldLen = Weight([prevVertex, v1, v2, nextVertex])
+		oldLen = Weight(task, [prevVertex, v1, v2, nextVertex])
 		cluster1 = task.clusterByVertex[v1]
 		cluster2 = task.clusterByVertex[v2]
 		bestV1 = 0
 		bestV2 = 0
 
-		if MinClusterDistance([task.clusterByVertex[prevVertex], cluster2, cluster1, task.clusterByVertex[nextVertex]]) >= oldLen:
+		if MinClusterDistance(task, [task.clusterByVertex[prevVertex], cluster2, cluster1, task.clusterByVertex[nextVertex]]) >= oldLen:
 			return 0, v1, v2
 
 		minDelta = 0
@@ -223,7 +221,7 @@ def NeighbourSwapWithCO(solution):
 			curV2 = task.clusters[cluster1][v1index]
 			for v2index in range(len(task.clusters[cluster2]) - 1, -1, -1):
 				curV1 = task.clusters[cluster2][v2index]
-				lens = Weight([prevVertex, curV1, curV2, nextVertex])
+				lens = Weight(task, [prevVertex, curV1, curV2, nextVertex])
 				delta = lens - oldLen
 				if delta < minDelta:
 					minDelta = delta
@@ -249,7 +247,7 @@ def NeighbourSwapWithCO(solution):
 		v2Pos = nextPos
 	return totalDelta
 
-def DirectTwoOptAsym(solution):
+def DirectTwoOptAsym(task, solution):
 	def InsertEdge(edges, edgeArraySize, pos2, w):
 		edges[0]['pos2'] = pos2
 		edges[0]['length'] = w
@@ -289,13 +287,13 @@ def DirectTwoOptAsym(solution):
 	totalDelta = 0
 	for begin2Index in range(n - 1, 0, -1):
 		begin2pos = edges[begin2Index]['pos2']
-		end1pos = PrevPos(begin2pos)
+		end1pos = PrevPos(task, begin2pos)
 		end1 = solution[end1pos]
 		begin2 = solution[begin2pos]
 
 		for begin1Index in range(begin2Index - 1, -1, -1):
 			begin1pos = edges[begin1Index]['pos2']
-			end2pos = PrevPos(begin1pos)
+			end2pos = PrevPos(task, begin1pos)
 			if begin1pos == end1pos or begin2pos == end2pos:
 				continue
 
@@ -306,8 +304,8 @@ def DirectTwoOptAsym(solution):
 
 			p = begin2pos
 			while p != end2pos:
-				delta -= Weight([solution[p], solution[NextPos(p)]]) - Weight([solution[NextPos(p)], solution[p]])
-				p = NextPos(p)
+				delta -= Weight(task, [solution[p], solution[NextPos(task, p)]]) - Weight(task, [solution[NextPos(task, p)], solution[p]])
+				p = NextPos(task, p)
 
 			if delta < 0:
 				p1 = begin2pos
@@ -318,8 +316,8 @@ def DirectTwoOptAsym(solution):
 					temp = solution[p1]
 					solution[p1] = solution[p2]
 					solution[p2] = temp
-					p1 = NextPos(p1)
-					p2 = PrevPos(p2)
+					p1 = NextPos(task, p1)
+					p2 = PrevPos(task, p2)
 
 				totalDelta += delta
 
@@ -327,12 +325,12 @@ def DirectTwoOptAsym(solution):
 				begin2 = solution[begin2pos]
 	return totalDelta
 
-def ThreeNeighbourFullSwap(solution):
+def ThreeNeighbourFullSwap(task, solution):
 	def TrySwap(prev, c1, c2, c3, next, vertices, oldDist):
 		prevC = task.clusterByVertex[prev]
 		nextC = task.clusterByVertex[next]
 
-		if MinClusterDistance([prevC, c1, c2, c3, nextC]) >= oldDist:
+		if MinClusterDistance(task, [prevC, c1, c2, c3, nextC]) >= oldDist:
 			return 0
 		c1Size = len(task.clusters[c1])
 		c2Size = len(task.clusters[c2])
@@ -348,7 +346,7 @@ def ThreeNeighbourFullSwap(solution):
 			bestV1forCurV2 = 0
 			for v1Index in range(c1Size - 1, -1, -1):
 				curV1 = task.clusters[c1][v1Index]
-				left = Weight([prev, curV1, curV2])
+				left = Weight(task, [prev, curV1, curV2])
 				if left < leftMin:
 					leftMin = left
 					bestV1forCurV2 = curV1
@@ -357,7 +355,7 @@ def ThreeNeighbourFullSwap(solution):
 			bestV3forCurV2 = 0
 			for v3Index in range(c3Size - 1, -1, -1):
 				curV3 = task.clusters[c3][v3Index]
-				right = Weight([curV2, curV3, next])
+				right = Weight(task, [curV2, curV3, next])
 				if right < rightMin:
 					rightMin = right
 					bestV3forCurV2 = curV3
@@ -391,7 +389,7 @@ def ThreeNeighbourFullSwap(solution):
 		c2 = task.clusterByVertex[v2]
 		c3 = task.clusterByVertex[v3]
 
-		oldDist = Weight([prev, v1, v2, v3, next])
+		oldDist = Weight(task, [prev, v1, v2, v3, next])
 
 		vertices1 = [0 for i in range(3)]
 		vertices2 = [0 for i in range(3)]
@@ -418,7 +416,7 @@ def ThreeNeighbourFullSwap(solution):
 		pos3 = nextPos
 	return totalDelta
 
-def ClusterOptimisation(result):
+def ClusterOptimisation(task, result):
 	def FindBestPath(firstClusterVertex):
 		bestCurLen = [0 for i in range(task.verticeCount)]
 		bestPrevLen = [0 for i in range(task.verticeCount)]
@@ -535,7 +533,7 @@ class Permutation:
 		self.values[index2] = t
 
 class RandomGenerate:
-	def GenerateKey(self):
+	def GenerateKey(self, task):
 		def GenerateRandom(n):
 			result = Permutation(n)
 			for i in range(n - 1):
@@ -546,7 +544,7 @@ class RandomGenerate:
 		result = [0 for i in range(task.clusterCount)]
 		for i in range(task.clusterCount):
 			result[i] = task.clusters[permutation.values[i]][random.randint(0, len(task.clusters[permutation.values[i]]) - 1)]
-		ClusterOptimisation(result)
+		ClusterOptimisation(task, result)
 		return result
 
 class RandomTourItem:
@@ -559,8 +557,6 @@ class TourElement:
 	def __init__(self, clusterIndex, vertexInCluster):
 		self.clusterIndex = clusterIndex
 		self.vertexInCluster = vertexInCluster
-	def GetVertexIndex(self):
-		return task[self.clusterIndex][self.vertexInCluster]
 
 FullSwapId = 1
 InsertsWithCoId = 2
@@ -578,7 +574,7 @@ H = [
 ]
 
 class Tour:
-	def __init__(self, generation, strategy = None, vertices = None):
+	def __init__(self, task, generation, strategy = None, vertices = None):
 		def crossoverCross(parent1, parent2):
 			result = [0 for i in range(task.clusterCount)]
 
@@ -593,7 +589,7 @@ class Tour:
 			exists = [False for i in range(task.clusterCount)]
 			for i in range(task.clusterCount):
 				while exists[parent1.GetCluster(sourcePosition1)]:
-					sourcePosition1 = NextPos(sourcePosition1)
+					sourcePosition1 = NextPos(task, sourcePosition1)
 
 				result[i] = parent1.vertices[sourcePosition1]
 				exists[parent1.GetCluster(sourcePosition1)] = True
@@ -608,6 +604,7 @@ class Tour:
 					sourcePosition2 = tempSourcePosition
 			return result
 
+		self.task = task
 		if strategy:
 			self.firstClusterPosition = -1
 			index1, index2 = strategy.Run(generation)
@@ -627,23 +624,23 @@ class Tour:
 			self.UpdateLength()
 		else:
 			self.firstClusterPosition = -1
-			self.vertices = generation.GenerateKey()
+			self.vertices = generation.GenerateKey(task)
 			self.length = -1
 			self.UpdateLength()
 	def UpdateLength(self):
-		self.length = task.m[self.vertices[len(self.vertices) - 1]][self.vertices[0]]
+		self.length = self.task.m[self.vertices[len(self.vertices) - 1]][self.vertices[0]]
 		for i in range(1, len(self.vertices)):
-			self.length += task.m[self.vertices[i - 1]][self.vertices[i]]
+			self.length += self.task.m[self.vertices[i - 1]][self.vertices[i]]
 	def RestoreIndex(self, index):
 		if index < 0:
-			return index + task.clusterCount
-		if index >= task.clusterCount:
-			return index - task.clusterCount
+			return index + self.task.clusterCount
+		if index >= self.task.clusterCount:
+			return index - self.task.clusterCount
 		return index
 	def GetCluster(self, position):
-		return task.GetCluster2(self.vertices[position])
+		return self.task.GetCluster2(self.vertices[position])
 	def GetElement(self, position):
-		cluster, vertexIndex = task.GetCluster(self.vertices[position])
+		cluster, vertexIndex = self.task.GetCluster(self.vertices[position])
 		item = RandomTourItem(cluster, vertexIndex)
 		return TourElement(item.clusterIndex, item.vertexInCluster)
 	def equals(self, tour):
@@ -660,16 +657,16 @@ class Tour:
 			tour2 = self
 
 		tourIndex = delta
-		for i in range(task.clusterCount - 1, -1, -1):
+		for i in range(self.task.clusterCount - 1, -1, -1):
 			if tour1.vertices[i] != tour2.vertices[tourIndex]:
 				return False
-			tourIndex = PrevPos(tourIndex)
+			tourIndex = PrevPos(self.task, tourIndex)
 		return True
 	def GetFirstClusterPosition(self):
 		if self.firstClusterPosition >= 0:
 			return self.firstClusterPosition
 
-		for i in range(task.clusterCount):
+		for i in range(self.task.clusterCount):
 			if self.GetElement(i).clusterIndex == 0:
 				self.firstClusterPosition = i
 				return self.firstClusterPosition
@@ -687,7 +684,7 @@ class Tour:
 			for i in range(len(H)):
 				if onceFailedHeuristics & H[i][2]:
 					continue
-				delta = H[i][0](self.vertices)
+				delta = H[i][0](self.task, self.vertices)
 				if delta < 0:
 					idleCycle = False
 					totalDelta += delta
@@ -695,7 +692,7 @@ class Tour:
 					onceFailedHeuristics |= H[i][1]
 			if idleCycle:
 				break
-		self.length = ClusterOptimisation(self.vertices)
+		self.length = ClusterOptimisation(self.task, self.vertices)
 
 class ElitistTwoStrategy:
 	def __init__(self, part):
@@ -708,7 +705,6 @@ class ElitistTwoStrategy:
 			if index1 != index2:
 				break
 		return index1, index2
-crossoverStrategy = ElitistTwoStrategy(0.33)
 
 class ElitistOneStrategy:
 	def __init__(self, max):
@@ -716,17 +712,16 @@ class ElitistOneStrategy:
 	def Run(self, generation):
 		maxIndex = int(generation.Size() * self.max)
 		return int((random.uniform(0, 1) ** 2) * maxIndex)
-mutationStrategy = ElitistOneStrategy(0.75)
 	
 class Algorithm:
 	def __init__(self, m, clusters):
 		def CalculateMinClusterDistance(fromCluster, toCluster):
 			min = sys.maxsize
-			for fromVertexIndex in range(len(task.clusters[fromCluster])):
-				fromVertex = task.clusters[fromCluster][fromVertexIndex]
-				for toVertexIndex in range(len(task.clusters[toCluster])):
-					toVertex = task.clusters[toCluster][toVertexIndex]
-					w = task.m[fromVertex][toVertex]
+			for fromVertexIndex in range(len(self.task.clusters[fromCluster])):
+				fromVertex = self.task.clusters[fromCluster][fromVertexIndex]
+				for toVertexIndex in range(len(self.task.clusters[toCluster])):
+					toVertex = self.task.clusters[toCluster][toVertexIndex]
+					w = self.task.m[fromVertex][toVertex]
 					if w < min:
 						min = w
 			return min
@@ -734,33 +729,38 @@ class Algorithm:
 		self.generationCount = 0
 		self.consecutiveIdleGenerationCount = 0
 		self.maxIdleGenerations = 0
-		
+		self.task = Task()
+		self.crossoverStrategy = ElitistTwoStrategy(0.33)
+		self.mutationStrategy = ElitistOneStrategy(0.75)
+
 		infinite = int(sys.maxsize / len(clusters))
-		task.verticeCount = len(m)
-		for i in range(task.verticeCount):
-			for j in range(task.verticeCount):
+		self.task.verticeCount = len(m)
+		for i in range(self.task.verticeCount):
+			for j in range(self.task.verticeCount):
 				if m[i][j] == -1:
 					m[i][j] = infinite
 				else:
 					m[i][j] = int(m[i][j] * 1000)
-		task.m = m
+		self.task.m = m
 		
-		task.clusters = clusters
-		task.clusterCount = len(clusters)
-		task.clusterByVertex = [0 for i in range(task.verticeCount)]
-		task.verticesInfo = [0 for i in range(task.verticeCount)]
-		for i in range(task.clusterCount):
+		self.task.clusters = clusters
+		self.task.clusterCount = len(clusters)
+		self.task.clusterByVertex = [0 for i in range(self.task.verticeCount)]
+		self.task.verticesInfo = [0 for i in range(self.task.verticeCount)]
+		for i in range(self.task.clusterCount):
 			for j in range(len(clusters[i])):
-				task.clusterByVertex[clusters[i][j]] = i
-				task.verticesInfo[clusters[i][j]] = VertexInfo(i, j)
+				self.task.clusterByVertex[clusters[i][j]] = i
+				self.task.verticesInfo[clusters[i][j]] = VertexInfo(i, j)
 				
-		task.minClusterDistances = [[0 for i in range(task.clusterCount)] for j in range(task.clusterCount)]
-		for fromCluster in range(task.clusterCount):
-			for toCluster in range(task.clusterCount):
+		self.task.minClusterDistances = [[0 for i in range(self.task.clusterCount)] for j in range(self.task.clusterCount)]
+		for fromCluster in range(self.task.clusterCount):
+			for toCluster in range(self.task.clusterCount):
 				if toCluster != fromCluster:
-					task.minClusterDistances[fromCluster][toCluster] = CalculateMinClusterDistance(fromCluster, toCluster)
+					self.task.minClusterDistances[fromCluster][toCluster] = CalculateMinClusterDistance(fromCluster, toCluster)
+	def check_cluster(self):
+		return len(self.task.clusters) <= 1024 and len(self.task.m) <= 1024 * 5
 	def MaxTriesForFirstGeneration(self):
-		return task.clusterCount * 4
+		return self.task.clusterCount * 4
 	def FirstGeneration(self, cur):
 		generatingAlgorithm = RandomGenerate()
 		for tries in range(self.MaxTriesForFirstGeneration()):
@@ -773,9 +773,9 @@ class Algorithm:
 		self.prev = generation
 		self.generationCount += 1
 	def StopCondition(self):
-		return self.consecutiveIdleGenerationCount > max(self.maxIdleGenerations * 3 // 2, (task.clusterCount // 20 + 10))
+		return self.consecutiveIdleGenerationCount > max(self.maxIdleGenerations * 3 // 2, (self.task.clusterCount // 20 + 10))
 	def ReproductionsCount(self):
-		return 10 + task.clusterCount // 20 + self.generationCount // 5
+		return 10 + self.task.clusterCount // 20 + self.generationCount // 5
 	def NextGeneration(self, cur):
 		def Reproduction(cur):
 			for i in range(self.ReproductionsCount()):
@@ -785,7 +785,7 @@ class Algorithm:
 			def CrossoverTries():
 				return 8 * self.ReproductionsCount()
 			for i in range(CrossoverTries()):
-				tour = Tour(self.prev, crossoverStrategy)
+				tour = Tour(self.prev, self.crossoverStrategy)
 				tour.Improve()
 				if not cur.Contains(tour):
 					cur.Add(tour)
@@ -794,7 +794,7 @@ class Algorithm:
 				return 2 * self.ReproductionsCount()
 			def mutationOperatorRun(source):
 				values = source.vertices
-				M = task.clusterCount
+				M = self.task.clusterCount
 
 				rotation = random.randint(0, M - 1)
 				values = Rotate(values, rotation)
@@ -813,7 +813,7 @@ class Algorithm:
 				return Tour(None, vertices = newValues)
 
 			for i in range(MutationTries()):
-				index = mutationStrategy.Run(self.prev)
+				index = self.mutationStrategy.Run(self.prev)
 
 				tour = mutationOperatorRun(self.prev.tours[index])
 				tour.Improve()
@@ -837,10 +837,9 @@ class Algorithm:
 			self.NextGeneration(generation)
 			self.AddGeneration(generation)
 
-def check_cluster():
-	return len(task.clusters) <= 1024 and len(task.m) <= 1024 * 5
-
 def optimal_solution(cluster, matrix):
 	solver = Algorithm(matrix, cluster)
+	if not solver.check_cluster():
+		return None
 	solver.run()
 	return solver.prev.tours[0].vertices
